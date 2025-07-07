@@ -13,3 +13,11 @@
 
     {{ return(storage_parameters) }}
 {% endmacro %}
+
+{% macro beam_storage_parameters(compresstype, compresslevel) %}
+    with (
+        compresstype={{ compresstype }},
+        compresslevel={{ compresslevel }},
+	    ctidversion=2
+    )
+{% endmacro %}

@@ -4,15 +4,25 @@
 
 
   {# Greenplum specific #}
+  {%- set table_type = config.get('table_type', default='heap') -%}
   {%- set distributed_replicated = config.get('distributed_replicated', default=false) -%}
   {%- set distributed_randomly = config.get('distributed_randomly', default=false) -%}  
   {%- set distributed_by = config.get('distributed_by', none) -%}
-  {%- set appendonly = config.get('appendonly', default=false) -%}
-  {%- set appendoptimized = config.get('appendoptimized', default=appendonly) -%}
-  {%- set orientation = config.get('orientation', default='column') -%}
-  {%- set compresstype = config.get('compresstype', default='ZSTD') -%}
-  {%- set compresslevel = config.get('compresslevel', default=4) -%}
-  {%- set blocksize = config.get('blocksize', default=32768) -%}
+
+  {% if table_type == 'beam' %}
+  {# Beam-specific defaults #}
+    {%- set order_by = config.get('order_by', none) -%}
+    {%- set compresstype = 'auto' -%}
+    {%- set compresslevel = 4 -%}
+  {% else %}
+    {# AO defaults #}
+    {%- set appendonly = config.get('appendonly', default=true) -%}
+    {%- set appendoptimized = config.get('appendoptimized', default=appendonly) -%}
+    {%- set orientation = config.get('orientation', default='column') -%}
+    {%- set compresstype = config.get('compresstype', default='ZSTD') -%}
+    {%- set compresslevel = config.get('compresslevel', default=4) -%}
+    {%- set blocksize = config.get('blocksize', default=32768) -%}
+  {% endif %}
 
   {% set partition_spec = config.get('partition_spec', none) %}
 
@@ -37,7 +47,12 @@
     create table if not exists {{ relation }} (
         {{ fields_string }}
     )
-    {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+    {% if table_type == 'beam' %}
+      using beam
+      {{ beam_storage_parameters(compresstype, compresslevel) }}
+    {% else %}
+      {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+    {% endif %}
     {{ distribution(distributed_by, distributed_randomly, distributed_replicated) }}
     {{ partitions(raw_partition, partition_type, partition_column,
                   default_partition_name, partition_start, partition_end,
@@ -55,7 +70,12 @@
     {%- elif unlogged -%}
       unlogged
     {%- endif %} table {{ relation }}
+      {% if table_type == 'beam' %}
+      using beam
+      {{ beam_storage_parameters(compresstype, compresslevel) }}
+    {% else %}
       {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+    {% endif %}
     {% set contract_config = config.get('contract') %}
     {% if contract_config.enforced %}
       {{ get_assert_columns_equivalent(sql) }}
