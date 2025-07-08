@@ -1,1 +1,1 @@
-version = "1.8.2-beam"
+version = "1.8.2"
