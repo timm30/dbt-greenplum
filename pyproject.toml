@@ -46,7 +46,7 @@ build-backend = "hatchling.build"
 include = ["dbt"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["dbt"]
+packages = ["dbt", "dbt.adapters", "dbt.adapters.greenplum"]
 
 [tool.hatch.version]
 path = "dbt/adapters/greenplum/__version__.py"
