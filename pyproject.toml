@@ -117,3 +117,6 @@ testpaths = [
     "tests/functional",
     "tests/unit",
 ]
+
+[project.entry-points."dbt.adapters"]
+greenplum = "dbt.adapters.greenplum:GreenplumPlugin"
